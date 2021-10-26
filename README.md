@@ -1,6 +1,6 @@
 # COMP3021 PA3: Inertia Java FX Game - Multiplayer Extension
 
-In PA3, your tasks are basically to extend the implement to support multiple players. 
+In PA3, your tasks are basically to extend the implementation to support multiple players. 
 The information provided in PA1 and PA2 will not be repeated in this README. 
 You may check out [PA1](https://github.com/CastleLab/COMP3021-2021Fall-PA1-Student-Version) and [PA2](https://github.com/CastleLab/COMP3021-2021Fall-PA2-Student-Version) if you want to revisit that.
 
@@ -10,7 +10,7 @@ PA3 has to be released one month before the end of the semester.
 However, due to the fact that PA2's deadline is Nov. 8, 2021, we cannot release PA3 after PA2's deadline passes.
 Therefore, PA3 will be released in two stages. 
 
-### Stage 1 - Core Extension (Released)
+### Stage 1 - Core Extension
 
 On **Nov. 1**, release:
 - the specification of PA3 and
@@ -22,7 +22,7 @@ Your implementation should be submitted together with that of stage 2 by the dea
 No code skeleton related to the TODOs in PA2 is released. 
 So it will not interfere with PA2.
 
-### Stage 2 - GUI Extension (Not yet released)
+### Stage 2 - GUI Extension
 
 On **Nov. 9**, release:
 - the code skeleton for the rest of packages related to GUI, i.e., `hk.ust.cse.comp3021.pa3.view`.
@@ -98,14 +98,14 @@ The benefit of maintaining backward compatibility is that almost all tests from 
 
 In PA3, it is allowed to have multiply players (`P`) in a game map. 
 We provide a sample multiplayer map in `puzzles/05-extra-live.multiplayer.game`.
-You can load it into the provided obfuscated JAR, and try it out.
+You can load it into the program (after [Stage 2](#stage-2---gui-extension) is released), and try it out.
 
 ### Manual Control and Robot
 
 In PA3, in addition to manually controlling players by clicking buttons, we introduce automated robots to control the players. 
 ![Overview](./img/Overview.png)
 
-As shown in the screenshot of the provided obfuscated JAR, each player has its own control buttons, as well as a `Robot Disable/Enabled` button. 
+As shown in the screenshot of the GUI program (available after [Stage 2](#stage-2---gui-extension) is released), each player has its own control buttons, as well as a `Robot Disable/Enabled` button. 
 When `Robot` is enabled, all control buttons are disabled and the player is controlled by an instance of `hk.ust.cse.comp3021.pa3.util.Robot`.
 The robot can be disabled at any time to revoke manual control.
 
