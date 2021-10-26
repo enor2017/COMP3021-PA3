@@ -1,0 +1,34 @@
+.main-menu-button {
+    -fx-font-size: 18pt;
+}
+
+.game-title {
+    -fx-font-size: 24pt;
+    -fx-background-color: teal;
+    -fx-text-fill: white;
+    -fx-alignment: center;
+    -fx-padding: 10px;
+    -fx-max-width: infinity;
+}
+
+.move-button {
+    -fx-font-size: 14pt;
+    -fx-text-alignment: center;
+    -fx-min-width: 50px;
+    -fx-min-height: 50px;
+}
+
+GameCell {
+    -fx-max-width: 30px;
+    -fx-max-height: 30px;
+}
+
+GameStaticsPane {
+
+    -fx-background-color: teal;
+}
+
+GameStaticsPane > Label {
+    -fx-font-size: 14pt;
+    -fx-text-fill: white;
+}

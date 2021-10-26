@@ -1,0 +1,57 @@
+//file:noinspection GroovyAssignabilityCheck
+plugins {
+    id 'java-gradle-plugin'
+    id 'com.github.hierynomus.license' version '0.15.0'
+    id 'com.gradle.plugin-publish' version '0.12.0'
+    id 'com.github.ben-manes.versions' version '0.20.0'
+    id 'maven-publish'
+}
+
+group 'net.henryhc.fork.org.openjfx'
+version '0.0.11-SNAPSHOT'
+
+sourceCompatibility = 11
+targetCompatibility = 11
+
+repositories {
+    mavenCentral()
+    maven {
+        url "https://plugins.gradle.org/m2/"
+    }
+}
+
+dependencies {
+    implementation gradleApi()
+
+    implementation 'com.google.gradle:osdetector-gradle-plugin:1.6.1'
+    implementation 'org.javamodularity:moduleplugin:1.8.2'
+
+    testImplementation gradleTestKit()
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.3.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.3.2'
+}
+
+gradlePlugin {
+    plugins {
+        javafxPlugin {
+            id = 'net.henryhc.fork.org.openjfx.javafxplugin'
+            displayName = 'JavaFX Gradle Plugin'
+            description = 'Plugin that makes it easy to work with JavaFX'
+            implementationClass = 'org.openjfx.gradle.JavaFXPlugin'
+        }
+    }
+}
+
+pluginBundle {
+    website = 'https://github.com/openjfx/javafx-gradle-plugin'
+    vcsUrl = 'https://github.com/openjfx/javafx-gradle-plugin'
+    tags = [ 'java', 'javafx' ]
+}
+
+
+license {
+    skipExistingHeaders = true
+    mapping {
+        java = 'SLASHSTAR_STYLE'
+    }
+}
