@@ -1,14 +1,16 @@
-# COMP3021 PA3: Inertia Java FX Game - Multiplayer Extension
+# COMP3021 PA3: Inertia Java FX Game - Multithreading Extension
 
-In PA3, your tasks are basically to extend the implementation to support multiple players. 
+In PA3, your task is to add the support of multithreading, multiple players and a robot strategy. 
 The information provided in PA1 and PA2 will not be repeated in this README. 
 You may check out [PA1](https://github.com/CastleLab/COMP3021-2021Fall-PA1-Student-Version) and [PA2](https://github.com/CastleLab/COMP3021-2021Fall-PA2-Student-Version) if you want to revisit that.
 
 ## Two Release Stages
 
-PA3 has to be released one month before the end of the semester. 
-However, due to the fact that PA2's deadline is Nov. 8, 2021, we cannot release PA3 after PA2's deadline passes.
-Therefore, PA3 will be released in two stages. 
+Since parts of the framework in PA3 contains solutions of PA2, we release PA3 in two stages. At the first stage, we
+will release parts of the PA3 framework, which does not involve GUI. Classmates can start working on PA3 using this
+partial framework. We will release the full PA3 framework at the second stage right after PA2 deadline. Releasing
+PA3 in two stages will enable classmates to start early on the PA3 as this assignment can be heavier than the 
+other two assignments.
 
 ### Stage 1 - Core Extension
 
