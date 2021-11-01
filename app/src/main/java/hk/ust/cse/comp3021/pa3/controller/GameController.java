@@ -163,7 +163,7 @@ public class GameController {
             return false;
         }
 
-        this.getGameState().increaseNumLives(aliveState.collectedExtraLives.size());
+        this.getGameState().decreaseNumLives(aliveState.collectedExtraLives.size());
 
         this.getGameState().getGameBoardController().undoMove(aliveState);
         return true;
