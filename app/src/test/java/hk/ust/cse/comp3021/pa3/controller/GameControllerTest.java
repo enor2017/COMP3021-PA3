@@ -881,7 +881,7 @@ public class GameControllerTest {
             }
         });
 
-        gameState = new GameState(gameBoard, hasUnlimitedLives ? GameState.UNLIMITED_LIVES : 1);
+        gameState = new GameState(gameBoard, hasUnlimitedLives ? GameState.UNLIMITED_LIVES : 2);
         controller = new GameController(gameState);
 
         gameState.incrementNumMoves();
@@ -899,14 +899,14 @@ public class GameControllerTest {
         assumeTrue(gameState.getNumDeaths() == 0);
         assumeTrue(gameState.getNumMoves() == 1);
         assumeTrue(gameState.hasUnlimitedLives() == hasUnlimitedLives);
-        assumeTrue(gameState.getNumLives() == (hasUnlimitedLives ? Integer.MAX_VALUE : 1));
+        assumeTrue(gameState.getNumLives() == (hasUnlimitedLives ? Integer.MAX_VALUE : 2));
         assumeTrue(gameState.getNumGems() == 1);
         assumeFalse(gameState.getMoveStack().isEmpty());
 
         assertTrue(controller.processUndo());
 
         // Mutation Assertions
-        assertEquals(hasUnlimitedLives ? Integer.MAX_VALUE : 2, gameState.getNumLives());
+        assertEquals(hasUnlimitedLives ? Integer.MAX_VALUE : 1, gameState.getNumLives());
         assertTrue(gameState.getMoveStack().isEmpty());
 
         // Non-Mutation Assertions
@@ -934,7 +934,7 @@ public class GameControllerTest {
                 return new EntityCell(pos);
             }
         });
-        gameState = new GameState(gameBoard, hasUnlimitedLives ? GameState.UNLIMITED_LIVES : 1);
+        gameState = new GameState(gameBoard, hasUnlimitedLives ? GameState.UNLIMITED_LIVES : 2);
         controller = new GameController(gameState);
 
         gameState.incrementNumMoves();
@@ -952,14 +952,14 @@ public class GameControllerTest {
         assumeTrue(gameState.getNumDeaths() == 0);
         assumeTrue(gameState.getNumMoves() == 1);
         assumeTrue(gameState.hasUnlimitedLives() == hasUnlimitedLives);
-        assumeTrue(gameState.getNumLives() == (hasUnlimitedLives ? Integer.MAX_VALUE : 1));
+        assumeTrue(gameState.getNumLives() == (hasUnlimitedLives ? Integer.MAX_VALUE : 2));
         assumeTrue(gameState.getNumGems() == 1);
         assumeFalse(gameState.getMoveStack().isEmpty());
 
         assertTrue(controller.processUndo());
 
         // Mutation Assertions
-        assertEquals(hasUnlimitedLives ? Integer.MAX_VALUE : 2, gameState.getNumLives());
+        assertEquals(hasUnlimitedLives ? Integer.MAX_VALUE : 1, gameState.getNumLives());
         assertEquals(2, gameState.getNumGems());
         assertTrue(gameState.getMoveStack().isEmpty());
 
