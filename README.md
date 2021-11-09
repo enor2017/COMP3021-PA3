@@ -12,7 +12,7 @@ partial framework. We will release the full PA3 framework at the second stage ri
 PA3 in two stages will enable classmates to start early on the PA3 as this assignment can be heavier than the 
 other two assignments.
 
-### Stage 1 - Core Extension
+### Stage 1 - Core Extension (Released)
 
 On **Nov. 1**, release:
 - the specification of PA3 and
@@ -24,7 +24,7 @@ Your implementation should be submitted together with that of stage 2 by the dea
 No code skeleton related to the TODOs in PA2 is released. 
 So it will not interfere with PA2.
 
-### Stage 2 - GUI Extension
+### Stage 2 - GUI Extension (Released)
 
 On **Nov. 9**, release:
 - the code skeleton for the rest of packages related to GUI, i.e., `hk.ust.cse.comp3021.pa3.view`.
