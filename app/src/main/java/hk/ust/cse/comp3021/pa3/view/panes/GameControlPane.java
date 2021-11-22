@@ -94,7 +94,7 @@ public class GameControlPane extends GridPane implements GameUIComponent {
     }
 
     /**
-     * TODO Delegate the control of movement from the GUI to an automated delegate.
+     * DONE: Delegate the control of movement from the GUI to an automated delegate.
      * Call the {@link MoveDelegate#startDelegation(MoveDelegate.MoveProcessor)} method of the given delegate.
      * <p>
      * After delegation, the {@link GameControlPane#upButton}, {@link GameControlPane#downButton},
@@ -104,17 +104,18 @@ public class GameControlPane extends GridPane implements GameUIComponent {
      * @param delegate The automated delegate to control the movement.
      */
     public void delegateControl(MoveDelegate delegate) {
-
+        delegate.startDelegation(this::move);
+        disable();
     }
 
     /**
-     * TODO Revoke the control from the delegate if there is any.
+     * DONE: Revoke the control from the delegate if there is any.
      * After revoking delegation, the {@link GameControlPane#upButton}, {@link GameControlPane#downButton},
      * {@link GameControlPane#leftButton}, and {@link GameControlPane#rightButton}
      * should be enabled to allow control from GUI, i.e., call {@link GameControlPane#enable()}.
      */
     public void revokeControl() {
-
+        enable();
     }
 
     /**

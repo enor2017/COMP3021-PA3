@@ -3,6 +3,7 @@ package hk.ust.cse.comp3021.pa3.util;
 import hk.ust.cse.comp3021.pa3.model.Direction;
 import hk.ust.cse.comp3021.pa3.model.GameState;
 import hk.ust.cse.comp3021.pa3.model.MoveResult;
+import javafx.scene.paint.Stop;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -45,7 +46,55 @@ public class Robot implements MoveDelegate {
     }
 
     /**
-     * TODO Start the delegation in a new thread.
+     * An ArrayList to store all current threads of this robot
+     */
+    private final ArrayList<Thread> threads = new ArrayList<>();
+    /**
+     * An ArrayList to store all tasks corresponding to above threads
+     */
+    private final ArrayList<StoppableTask> tasks = new ArrayList<>();
+
+    private class StoppableTask implements Runnable{
+        /**
+         * Use a flag to determine whether the thread should continue or not
+         */
+        private final AtomicBoolean running = new AtomicBoolean(true);
+
+        private MoveProcessor processor;
+
+        /**
+         * Set the processor of current task
+         */
+        public void setProcessor(MoveProcessor processor) {
+            this.processor = processor;
+        }
+
+        /**
+         * Terminate the thread, by setting flag to false
+         */
+        public void endThread() {
+            running.set(false);
+        }
+        @Override
+        public void run() {
+            stopDelegation();
+            while (running.get()) {
+                try {
+                    Thread.sleep(timeIntervalGenerator.next());
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                if (strategy == Strategy.Random) {
+                    makeMoveRandomly(processor);
+                } else {
+                    makeMoveSmartly(processor);
+                }
+            }
+        }
+    }
+
+    /**
+     * DONE Start the delegation in a new thread.
      * The delegation should run in a separate thread.
      * This method should return immediately when the thread is started.
      * <p>
@@ -66,16 +115,27 @@ public class Robot implements MoveDelegate {
      */
     @Override
     public void startDelegation(@NotNull MoveProcessor processor) {
-
+        var task = new StoppableTask();
+        task.setProcessor(processor);
+        var thread = new Thread(task);
+        threads.add(thread);
+        tasks.add(task);
     }
 
     /**
-     * TODO Stop the delegations, i.e., stop the thread of this instance.
+     * DONE Stop the delegations, i.e., stop the thread of this instance.
      * When this method returns, the thread must have exited already.
      */
     @Override
     public void stopDelegation() {
-
+        for (var t : tasks) {
+            t.endThread();
+        }
+        for (var th : threads) {
+            while (th.getState() != Thread.State.TERMINATED);
+        }
+        tasks.clear();
+        threads.clear();
     }
 
     private MoveResult tryMove(Direction direction) {
