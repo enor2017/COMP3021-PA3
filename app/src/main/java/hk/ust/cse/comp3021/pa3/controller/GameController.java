@@ -5,6 +5,7 @@ import hk.ust.cse.comp3021.pa3.util.NotImplementedException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -170,13 +171,33 @@ public class GameController {
     }
 
     /**
-     * TODO Get winners of the game.
+     * DONE Get winners of the game.
      * You can find the winning conditions from README.
      *
-     * @return null if the game has not finished yet; otherwise emtpy array if there is no winners, or non-empty array if there are winners.
+     * @return null if the game has not finished yet; otherwise empty array if there is no winners, or non-empty array if there are winners.
      */
     @Nullable
     public Player[] getWinners() {
-        throw new NotImplementedException();
+        int maxScore = -Integer.MAX_VALUE;
+        for (var gameState : getGameStates()) {
+            if (!gameState.noGemsLeft()) {
+                return null;
+            } else {
+                if (maxScore < gameState.getScore()) {
+                    maxScore = gameState.getScore();
+                }
+            }
+        }
+        if (maxScore == -Integer.MAX_VALUE) {
+            return (new ArrayList<Player>()).toArray(new Player[0]);
+        } else {
+            ArrayList<Player> winners = new ArrayList<>();
+            for (var gameState : getGameStates()) {
+                if (gameState.getScore() == maxScore) {
+                    winners.add(gameState.getPlayer());
+                }
+            }
+            return winners.toArray(new Player[0]);
+        }
     }
 }

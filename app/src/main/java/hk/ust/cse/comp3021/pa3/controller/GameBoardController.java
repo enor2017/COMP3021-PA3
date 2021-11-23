@@ -30,14 +30,14 @@ public class GameBoardController {
     }
 
     /**
-     * TODO Kick the player out of the game, i.e., remove it from the game board.
+     * DONE Kick the player out of the game, i.e., remove it from the game board.
      * This method should be called when the player loses, i.e., has no more lives.
      * TODO modify this method if you need to do thread synchronization.
      *
      * @param playerId The id of the player to kick out.
      */
     public void kickOut(int playerId) {
-
+        gameBoard.getPlayers().removeIf(e -> e.getId() == playerId);
     }
 
     /**
