@@ -136,11 +136,8 @@ public class Robot implements MoveDelegate {
             t.endThread();
         }
         for (var th : threads) {
-            int i = 0;
-            while (th.getState() != Thread.State.TERMINATED && i++ <= 1000) {
-                System.out.println(th + " still running!, i = " + i);
-            }
-            System.out.println("out!");
+            while (th.getState() != Thread.State.TERMINATED) {}
+//            System.out.println("out!");
         }
         tasks.clear();
         threads.clear();
