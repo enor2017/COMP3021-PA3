@@ -4,7 +4,6 @@ import hk.ust.cse.comp3021.pa3.model.Direction;
 import hk.ust.cse.comp3021.pa3.model.GameState;
 import hk.ust.cse.comp3021.pa3.model.MoveResult;
 import javafx.application.Platform;
-import javafx.scene.paint.Stop;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
