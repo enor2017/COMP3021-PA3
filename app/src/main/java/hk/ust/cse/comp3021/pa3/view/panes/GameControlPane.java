@@ -104,7 +104,8 @@ public class GameControlPane extends GridPane implements GameUIComponent {
      * @param delegate The automated delegate to control the movement.
      */
     public void delegateControl(MoveDelegate delegate) {
-        delegate.startDelegation(this::move);
+        moveDelegate = delegate;
+        moveDelegate.startDelegation(this::move);
         disable();
     }
 
@@ -115,6 +116,7 @@ public class GameControlPane extends GridPane implements GameUIComponent {
      * should be enabled to allow control from GUI, i.e., call {@link GameControlPane#enable()}.
      */
     public void revokeControl() {
+        moveDelegate.stopDelegation();
         enable();
     }
 

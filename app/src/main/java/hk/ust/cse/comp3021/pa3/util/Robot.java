@@ -3,6 +3,7 @@ package hk.ust.cse.comp3021.pa3.util;
 import hk.ust.cse.comp3021.pa3.model.Direction;
 import hk.ust.cse.comp3021.pa3.model.GameState;
 import hk.ust.cse.comp3021.pa3.model.MoveResult;
+import javafx.application.Platform;
 import javafx.scene.paint.Stop;
 import org.jetbrains.annotations.NotNull;
 
@@ -77,7 +78,6 @@ public class Robot implements MoveDelegate {
         }
         @Override
         public void run() {
-            stopDelegation();
             while (running.get()) {
                 try {
                     Thread.sleep(timeIntervalGenerator.next());
@@ -85,9 +85,12 @@ public class Robot implements MoveDelegate {
                     e.printStackTrace();
                 }
                 if (strategy == Strategy.Random) {
-                    makeMoveRandomly(processor);
+                    // need to let JavaFX Thread run this method.
+                    Platform.runLater(() -> makeMoveRandomly(processor));
+//                    makeMoveRandomly(processor);
                 } else {
-                    makeMoveSmartly(processor);
+                    Platform.runLater(() -> makeMoveSmartly(processor));
+//                    makeMoveSmartly(processor);
                 }
             }
         }
@@ -118,6 +121,8 @@ public class Robot implements MoveDelegate {
         var task = new StoppableTask();
         task.setProcessor(processor);
         var thread = new Thread(task);
+        stopDelegation();
+        thread.start();
         threads.add(thread);
         tasks.add(task);
     }
@@ -132,7 +137,11 @@ public class Robot implements MoveDelegate {
             t.endThread();
         }
         for (var th : threads) {
-            while (th.getState() != Thread.State.TERMINATED);
+            int i = 0;
+            while (th.getState() != Thread.State.TERMINATED && i++ <= 1000) {
+                System.out.println(th + " still running!, i = " + i);
+            }
+            System.out.println("out!");
         }
         tasks.clear();
         threads.clear();
