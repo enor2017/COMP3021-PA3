@@ -107,13 +107,13 @@ public class GameController {
 
     /**
      * Processes a Move action performed by the player.
-     * TODO modify this method if you need to do thread synchronization.
+     * DONE modify this method if you need to do thread synchronization.
      *
      * @param direction The direction the player wants to move to.
      * @param playerID  ID of the player to move.
      * @return An instance of {@link MoveResult} indicating the result of the action.
      */
-    public MoveResult processMove(@NotNull final Direction direction, int playerID) {
+    public synchronized MoveResult processMove(@NotNull final Direction direction, int playerID) {
         Objects.requireNonNull(direction);
 
         var result = this.getGameState(playerID).getGameBoardController().makeMove(direction, playerID);
@@ -180,6 +180,7 @@ public class GameController {
     public Player[] getWinners() {
         int maxScore = -Integer.MAX_VALUE;
         for (var gameState : getGameStates()) {
+            if (gameState.hasLost()) continue;
             if (!gameState.noGemsLeft()) {
                 return null;
             } else {
@@ -193,7 +194,7 @@ public class GameController {
         } else {
             ArrayList<Player> winners = new ArrayList<>();
             for (var gameState : getGameStates()) {
-                if (gameState.getScore() == maxScore) {
+                if (!gameState.hasLost() && gameState.getScore() == maxScore) {
                     winners.add(gameState.getPlayer());
                 }
             }

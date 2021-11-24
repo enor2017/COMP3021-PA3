@@ -159,11 +159,11 @@ public class Robot implements MoveDelegate {
      * If there is no choice but only have one dying direction to move, the robot will still choose it.
      * If there is no valid direction, i.e. can neither die nor move, the robot do not perform a move.
      * <p>
-     * TODO modify this method if you need to do thread synchronization.
+     * DONE modify this method if you need to do thread synchronization.
      *
      * @param processor The processor to make movements.
      */
-    private void makeMoveRandomly(MoveProcessor processor) {
+    private synchronized void makeMoveRandomly(MoveProcessor processor) {
         var directions = new ArrayList<>(Arrays.asList(Direction.values()));
         Collections.shuffle(directions);
         Direction aliveDirection = null;

@@ -102,7 +102,7 @@ public class MainGamePane extends VBox implements GameUIComponent {
 
     /**
      * {@link javafx.event.Event} handler for a game move operation triggered by {@link GameControlPane}.
-     * TODO you may or may not need to do thread synchronization in this method.
+     * DONE you may or may not need to do thread synchronization in this method.
      *
      * @param e The corresponding {@link MoveEvent}.
      */

@@ -32,12 +32,19 @@ public class GameBoardController {
     /**
      * DONE Kick the player out of the game, i.e., remove it from the game board.
      * This method should be called when the player loses, i.e., has no more lives.
-     * TODO modify this method if you need to do thread synchronization.
+     * DONE modify this method if you need to do thread synchronization.
      *
      * @param playerId The id of the player to kick out.
      */
-    public void kickOut(int playerId) {
-        gameBoard.getPlayers().removeIf(e -> e.getId() == playerId);
+    public synchronized void kickOut(int playerId) {
+        var playerList = gameBoard.getPlayers();
+        for (var player : playerList) {
+            if (player.getId() == playerId) {
+                gameBoard.getPlayers().removeIf(e -> e.getId() == playerId);
+                player.getOwner().setEntity(null);
+                return;
+            }
+        }
     }
 
     /**
@@ -59,7 +66,7 @@ public class GameBoardController {
 
     /**
      * Moves the player in the given direction.
-     * TODO modify this method if you need to do thread synchronization.
+     * DONE modify this method if you need to do thread synchronization.
      *
      * <p>
      * You should ensure that the game board is only mutated if the move is valid and results in the player still being
@@ -71,7 +78,7 @@ public class GameBoardController {
      * @return An instance of {@link MoveResult} representing the result of this action.
      */
     @Nullable
-    public MoveResult makeMove(@NotNull final Direction direction, int playerID) {
+    public synchronized MoveResult makeMove(@NotNull final Direction direction, int playerID) {
         Objects.requireNonNull(direction);
 
 
@@ -102,7 +109,7 @@ public class GameBoardController {
 
     /**
      * Undoes a move by reverting all changes performed by the specified move.
-     * TODO modify this method if you need to do synchronization.
+     * DONE modify this method if you need to do synchronization.
      *
      * <p>
      * Hint: Undoing a move is effectively the same as reversing everything you have done to make a move.
@@ -134,7 +141,7 @@ public class GameBoardController {
 
     /**
      * Tries to move the player from a position in the specified direction as far as possible.
-     * TODO modify this method if you need to do thread synchronization.
+     * DONE modify this method if you need to do thread synchronization.
      *
      * <p>
      * Note that this method does <b>NOT</b> actually move the player. It just tries to move the player and return
@@ -147,7 +154,7 @@ public class GameBoardController {
      * moving.
      */
     @NotNull
-    public MoveResult tryMove(@NotNull final Position position, @NotNull final Direction direction, int playerID) {
+    public synchronized MoveResult tryMove(@NotNull final Position position, @NotNull final Direction direction, int playerID) {
         Objects.requireNonNull(position);
         Objects.requireNonNull(direction);
 
