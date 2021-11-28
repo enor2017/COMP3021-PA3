@@ -72,6 +72,11 @@ public class PlayerPane extends VBox implements GameUIComponent {
     private void robotButtonAction(Event e) {
         if (robotButton.isSelected()) {
             robotButton.setText("Robot Enabled");
+//            if (Integer.parseInt(playerID.getText().substring(7)) % 2 == 0) {
+//                controlPane.delegateControl(new Robot(getGameState()));
+//            } else {
+//                controlPane.delegateControl(new Robot(getGameState(), Robot.Strategy.Smart));
+//            }
             controlPane.delegateControl(new Robot(getGameState()));
         } else {
             controlPane.revokeControl();

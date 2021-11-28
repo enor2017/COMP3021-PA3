@@ -7,7 +7,6 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Collectors;
 
 /**
  * The Robot is an automated worker that can delegate the movement control of a player.
@@ -384,8 +383,51 @@ public class Robot implements MoveDelegate {
         lock.unlock();
     }*/
 
+
+    private ArrayList<Direction> pathToNearestGem(GameBoard board, Position startPos) {
+        var directions = new ArrayList<>(Arrays.asList(Direction.values()));
+
+        HashSet<Position> vis = new HashSet<>();
+        vis.add(startPos);
+        Queue<Position> fringe = new LinkedList<>();
+        Queue<ArrayList<Direction>> paths = new LinkedList<>();
+
+        fringe.add(startPos);
+        paths.add(new ArrayList<>());
+
+        while (!fringe.isEmpty()) {
+            var currPos = fringe.poll();
+            var currPath = paths.poll();
+            for (var dire : directions) {
+                var moveResult = gameState.getGameBoardController().tryMove(currPos, dire, gameState.getPlayer().getId());
+                if (!(moveResult instanceof MoveResult.Valid.Alive va)) {
+                    continue;
+                }
+                var newPos = va.newPosition;
+                if (newPos == null || vis.contains(newPos)) {
+                    continue;
+                }
+
+                vis.add(newPos);
+                fringe.add(newPos);
+                if (currPath == null) {
+                    throw new IllegalStateException("currPath cannot be null!");
+                }
+                var newList = new ArrayList<>(currPath);
+                newList.add(dire);
+                paths.add(newList);
+
+                if (!va.collectedGems.isEmpty()) {
+                    return newList;
+                }
+            }
+        }
+        return null;
+    }
+
+
     /**
-     * TODO implement this method
+     * DONE implement this method
      * The robot moves with a smarter strategy compared to random.
      * This strategy is expected to beat random strategy in most of the time.
      * That is to say we will let random robot and smart robot compete with each other and repeat many (>10) times
@@ -398,8 +440,18 @@ public class Robot implements MoveDelegate {
      */
     private void makeMoveSmartly(MoveProcessor processor) {
         lock.lock();
-
+        if (gameState.getPlayer().getOwner() == null) {
+            lock.unlock();
+            return;
+        }
+        List<Direction> path = pathToNearestGem(gameState.getGameBoard(), gameState.getPlayer().getOwner().getPosition());
+        if (path != null) {
+            processor.move(path.get(0));
+            lock.unlock();
+            return;
+        }
         lock.unlock();
+        makeMoveRandomly(processor);
     }
 
 }
