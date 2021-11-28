@@ -8,6 +8,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * The Robot is an automated worker that can delegate the movement control of a player.
@@ -19,6 +21,11 @@ public class Robot implements MoveDelegate {
     public enum Strategy {
         Random, Smart
     }
+
+    /**
+     * All robots should share one lock, to makeMove
+     */
+    private static Lock lock = new ReentrantLock();
 
     /**
      * A generator to get the time interval before the robot makes the next move.
@@ -163,7 +170,8 @@ public class Robot implements MoveDelegate {
      *
      * @param processor The processor to make movements.
      */
-    private synchronized void makeMoveRandomly(MoveProcessor processor) {
+    private void makeMoveRandomly(MoveProcessor processor) {
+        lock.lock();
         var directions = new ArrayList<>(Arrays.asList(Direction.values()));
         Collections.shuffle(directions);
         Direction aliveDirection = null;
@@ -182,7 +190,14 @@ public class Robot implements MoveDelegate {
         } else if (deadDirection != null) {
             processor.move(deadDirection);
         }
+        lock.unlock();
     }
+
+//    private int evaluateMove(GameState state, Direction direction) {
+//        var score = state.getScore();
+//        var result = tryMove(direction);
+//
+//    }
 
     /**
      * TODO implement this method
