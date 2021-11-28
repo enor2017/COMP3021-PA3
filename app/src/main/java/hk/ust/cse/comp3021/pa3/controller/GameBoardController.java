@@ -6,6 +6,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Objects;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Controller for {@link GameBoard}.
@@ -16,6 +18,8 @@ import java.util.Objects;
  * </p>
  */
 public class GameBoardController {
+
+    private static Lock lock = new ReentrantLock();
 
     @NotNull
     private final GameBoard gameBoard;
@@ -78,12 +82,14 @@ public class GameBoardController {
      * @return An instance of {@link MoveResult} representing the result of this action.
      */
     @Nullable
-    public synchronized MoveResult makeMove(@NotNull final Direction direction, int playerID) {
+    public MoveResult makeMove(@NotNull final Direction direction, int playerID) {
+        lock.lock();
         Objects.requireNonNull(direction);
 
 
         var playerOwner = gameBoard.getPlayer(playerID).getOwner();
         if (playerOwner == null) {
+            lock.unlock();
             return null;
         }
 
@@ -102,7 +108,7 @@ public class GameBoardController {
             assert alive.newPosition != null;
             gameBoard.getEntityCell(alive.newPosition).setEntity(gameBoard.getPlayer(playerID));
         }
-
+        lock.unlock();
         return tryMoveResult;
     }
 
@@ -154,7 +160,8 @@ public class GameBoardController {
      * moving.
      */
     @NotNull
-    public synchronized MoveResult tryMove(@NotNull final Position position, @NotNull final Direction direction, int playerID) {
+    public MoveResult tryMove(@NotNull final Position position, @NotNull final Direction direction, int playerID) {
+        lock.lock();
         Objects.requireNonNull(position);
         Objects.requireNonNull(direction);
 
@@ -182,6 +189,7 @@ public class GameBoardController {
 
             if (gameBoard.getCell(newPosition) instanceof EntityCell entityCell) {
                 if (entityCell.getEntity() instanceof Mine) {
+                    lock.unlock();
                     return new MoveResult.Valid.Dead(position, newPosition);
                 }
 
@@ -193,6 +201,7 @@ public class GameBoardController {
             }
         } while (true);
 
+        lock.unlock();
         if (lastValidPosition.equals(position)) {
             return new MoveResult.Invalid(position);
         }
