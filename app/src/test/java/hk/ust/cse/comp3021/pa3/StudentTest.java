@@ -8,6 +8,7 @@ import hk.ust.cse.comp3021.pa3.util.TimeIntervalGenerator;
 import hk.ust.cse.comp3021.pa3.view.UIServices;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -18,8 +19,6 @@ import java.nio.file.Paths;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class StudentTest {
-    private GameBoard gameBoard = null;
-    private GameState gameState = null;
     private GameController controller = null;
     private GameState[] gameStates;
 
@@ -28,7 +27,7 @@ public class StudentTest {
     @ParameterizedTest
     @Tag("student")
     @ValueSource(booleans = {true, false})
-    @DisplayName("testMultithreading")
+    @DisplayName("testMultithreading-smallMap")
     public void testMultithreading(final boolean fewerMove) throws FileNotFoundException {
 //        System.out.println(UIServices.getWorkingDirectory() + "/../puzzles/05-extra-life.multiplayer.game");
         Path puzzle = Paths.get(UIServices.getWorkingDirectory() + "/../puzzles/05-extra-life.multiplayer.game");
@@ -181,4 +180,187 @@ public class StudentTest {
         }
     }
 
+
+    @ParameterizedTest
+    @Tag("student")
+    @ValueSource(booleans = {true, false})
+    @DisplayName("testRobot-smallMap")
+    @Timeout(10)
+    public void testRobotSmallMap(final boolean playerZeroIsSmart) throws FileNotFoundException {
+        Path puzzle = Paths.get(UIServices.getWorkingDirectory() + "/../puzzles/05-extra-life.multiplayer.game");
+        // set time to normal
+        Robot.timeIntervalGenerator = TimeIntervalGenerator.expectedMilliseconds(10);
+
+        int winCount = 0;
+        // run 10 times
+        for (int $ = 0; $ < 10; ++$) {
+            gameStates = GameStateSerializer.loadFrom(puzzle);
+            controller = new GameController(gameStates);
+
+            // start robot delegation
+            var randomDelegate = new Robot(gameStates[playerZeroIsSmart ? 1 : 0], Robot.Strategy.Random);
+            var smartDelegate = new Robot(gameStates[playerZeroIsSmart ? 0 : 1], Robot.Strategy.Smart);
+            randomDelegate.startDelegation(e -> controller.processMove(e, gameStates[playerZeroIsSmart ? 1 : 0].getPlayer().getId()));
+            smartDelegate.startDelegation(e -> controller.processMove(e, gameStates[playerZeroIsSmart ? 0 : 1].getPlayer().getId()));
+
+
+            // check winner and loser
+            while (true) {
+                var winners = controller.getWinners();
+                if (winners == null || winners.length == 0) {
+                    continue;
+                }
+                randomDelegate.stopDelegation();
+                smartDelegate.stopDelegation();
+                if (winners.length == 2) {
+                    // if drawn, run another time.
+                    System.out.println("Warning: Draw!");
+                    $--;
+                } else if (winners[0] == gameStates[playerZeroIsSmart ? 0 : 1].getPlayer()) {
+                    winCount++;
+                }
+                break;
+            }
+        }
+        assertTrue(winCount >= 6, "only win " + winCount + " times out of 10.");
+        System.out.println("Great! Win " + winCount + " out of 10.");
+    }
+
+
+    @ParameterizedTest
+    @Tag("student")
+    @ValueSource(booleans = {true, false})
+    @DisplayName("testRobot-manyGemsMap")
+    @Timeout(10)
+    public void testRobotGemMap(final boolean playerZeroIsSmart) throws FileNotFoundException {
+        Path puzzle = Paths.get(UIServices.getWorkingDirectory() + "/../puzzles/08-test-robot.game");
+        // set time to normal
+        Robot.timeIntervalGenerator = TimeIntervalGenerator.expectedMilliseconds(10);
+
+        int winCount = 0;
+        // run 10 times
+        for (int $ = 0; $ < 10; ++$) {
+            gameStates = GameStateSerializer.loadFrom(puzzle);
+            controller = new GameController(gameStates);
+
+            // start robot delegation
+            var randomDelegate = new Robot(gameStates[playerZeroIsSmart ? 1 : 0], Robot.Strategy.Random);
+            var smartDelegate = new Robot(gameStates[playerZeroIsSmart ? 0 : 1], Robot.Strategy.Smart);
+            randomDelegate.startDelegation(e -> controller.processMove(e, gameStates[playerZeroIsSmart ? 1 : 0].getPlayer().getId()));
+            smartDelegate.startDelegation(e -> controller.processMove(e, gameStates[playerZeroIsSmart ? 0 : 1].getPlayer().getId()));
+
+
+            // check winner and loser
+            while (true) {
+                var winners = controller.getWinners();
+                if (winners == null || winners.length == 0) {
+                    continue;
+                }
+                randomDelegate.stopDelegation();
+                smartDelegate.stopDelegation();
+                if (winners.length == 2) {
+                    // if drawn, run another time.
+                    System.out.println("Warning: Draw!");
+                    $--;
+                } else if (winners[0] == gameStates[playerZeroIsSmart ? 0 : 1].getPlayer()) {
+                    winCount++;
+                }
+                break;
+            }
+        }
+        assertTrue(winCount >= 6, "only win " + winCount + " times out of 10.");
+        System.out.println("Great! Win " + winCount + " out of 10.");
+    }
+
+    @ParameterizedTest
+    @Tag("student")
+    @ValueSource(booleans = {true, false})
+    @DisplayName("testRobot-manyGemsTrickyMap")
+    @Timeout(10)
+    public void testRobotGemTrickyMap(final boolean playerZeroIsSmart) throws FileNotFoundException {
+        Path puzzle = Paths.get(UIServices.getWorkingDirectory() + "/../puzzles/09-test-robot-tricky.game");
+        // set time to normal
+        Robot.timeIntervalGenerator = TimeIntervalGenerator.expectedMilliseconds(10);
+
+        int winCount = 0;
+        // run 10 times
+        for (int $ = 0; $ < 10; ++$) {
+            gameStates = GameStateSerializer.loadFrom(puzzle);
+            controller = new GameController(gameStates);
+
+            // start robot delegation
+            var randomDelegate = new Robot(gameStates[playerZeroIsSmart ? 1 : 0], Robot.Strategy.Random);
+            var smartDelegate = new Robot(gameStates[playerZeroIsSmart ? 0 : 1], Robot.Strategy.Smart);
+            randomDelegate.startDelegation(e -> controller.processMove(e, gameStates[playerZeroIsSmart ? 1 : 0].getPlayer().getId()));
+            smartDelegate.startDelegation(e -> controller.processMove(e, gameStates[playerZeroIsSmart ? 0 : 1].getPlayer().getId()));
+
+
+            // check winner and loser
+            while (true) {
+                var winners = controller.getWinners();
+                if (winners == null || winners.length == 0) {
+                    continue;
+                }
+                randomDelegate.stopDelegation();
+                smartDelegate.stopDelegation();
+                if (winners.length == 2) {
+                    // if drawn, run another time.
+                    System.out.println("Warning: Draw!");
+                    $--;
+                } else if (winners[0] == gameStates[playerZeroIsSmart ? 0 : 1].getPlayer()) {
+                    winCount++;
+                }
+                break;
+            }
+        }
+        assertTrue(winCount >= 6, "only win " + winCount + " times out of 10.");
+        System.out.println("Great! Win " + winCount + " out of 10.");
+    }
+
+
+
+    @ParameterizedTest
+    @Tag("student")
+    @ValueSource(booleans = {true, false})
+    @DisplayName("testRobot-largeMap")
+    @Timeout(15)
+    public void testRobotLargeMap(final boolean playerZeroIsSmart) throws FileNotFoundException {
+        Path puzzle = Paths.get(UIServices.getWorkingDirectory() + "/../puzzles/07-test-multithread.game");
+        // set time to normal
+        Robot.timeIntervalGenerator = TimeIntervalGenerator.expectedMilliseconds(10);
+
+        int winCount = 0;
+        // run 10 times
+        for (int $ = 0; $ < 10; ++$) {
+            gameStates = GameStateSerializer.loadFrom(puzzle);
+            controller = new GameController(gameStates);
+
+            // start robot delegation
+            var randomDelegate = new Robot(gameStates[playerZeroIsSmart ? 1 : 0], Robot.Strategy.Random);
+            var smartDelegate = new Robot(gameStates[playerZeroIsSmart ? 0 : 1], Robot.Strategy.Smart);
+            randomDelegate.startDelegation(e -> controller.processMove(e, gameStates[playerZeroIsSmart ? 1 : 0].getPlayer().getId()));
+            smartDelegate.startDelegation(e -> controller.processMove(e, gameStates[playerZeroIsSmart ? 0 : 1].getPlayer().getId()));
+
+
+            // check winner and loser
+            while (true) {
+                var winners = controller.getWinners();
+                if (winners == null || winners.length == 0) {
+                    continue;
+                }
+                randomDelegate.stopDelegation();
+                smartDelegate.stopDelegation();
+                if (winners.length == 2) {
+                    // if drawn, run another time.
+                    System.out.println("Warning: Draw!");
+                    $--;
+                } else if (winners[0] == gameStates[playerZeroIsSmart ? 0 : 1].getPlayer()) {
+                    winCount++;
+                }
+                break;
+            }
+        }
+        assertTrue(winCount >= 6, "only win " + winCount + " times out of 10.");
+        System.out.println("Great! Win " + winCount + " out of 10.");
+    }
 }
