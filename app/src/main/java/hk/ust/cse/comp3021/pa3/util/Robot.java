@@ -1,15 +1,13 @@
 package hk.ust.cse.comp3021.pa3.util;
 
-import hk.ust.cse.comp3021.pa3.model.Direction;
-import hk.ust.cse.comp3021.pa3.model.GameState;
-import hk.ust.cse.comp3021.pa3.model.MoveResult;
-import javafx.application.Platform;
+import hk.ust.cse.comp3021.pa3.model.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 /**
  * The Robot is an automated worker that can delegate the movement control of a player.
@@ -91,12 +89,9 @@ public class Robot implements MoveDelegate {
                     e.printStackTrace();
                 }
                 if (strategy == Strategy.Random) {
-                    // need to let JavaFX Thread run this method.
-                    Platform.runLater(() -> makeMoveRandomly(processor));
-//                    makeMoveRandomly(processor);
+                    makeMoveRandomly(processor);
                 } else {
-                    Platform.runLater(() -> makeMoveSmartly(processor));
-//                    makeMoveSmartly(processor);
+                    makeMoveSmartly(processor);
                 }
             }
         }
@@ -193,11 +188,201 @@ public class Robot implements MoveDelegate {
         lock.unlock();
     }
 
-//    private int evaluateMove(GameState state, Direction direction) {
-//        var score = state.getScore();
-//        var result = tryMove(direction);
-//
-//    }
+
+/*    private int evaluateState(GameState state) {
+        if (state.hasLost()) {
+            return -100;
+        } *//*else if (state.noGemsLeft()) {
+            return Integer.MAX_VALUE;
+        }*//* else {
+            return state.getScore();
+        }
+    }
+
+    private GameState[] getGameStates() {
+        List <GameState> states = new ArrayList<>();
+        var players = gameState.getGameBoard().getPlayers();
+        players.forEach(p -> states.add(p.getGameState()));
+        return states.toArray(new GameState[0]);
+    }
+
+    private int switchPlayer(int agentIndex) {
+        var players = gameState.getGameBoard().getPlayers();
+        for (var player : players) {
+            if (player.getId() != agentIndex) {
+                return player.getId();
+            }
+        }
+        return -1;
+    }
+
+    private double expValue(GameState[] states, int depth, int maxDepth, int agentIndex) {
+        double expVal = 0;
+        int numValidMoves = 0;
+        var directions = new ArrayList<>(Arrays.asList(Direction.values()));
+        for (var dire : directions) {
+            var player = states[agentIndex % 2].getPlayer();
+            if (player.getOwner() == null) {
+                throw new IllegalArgumentException("player's owner is null in expValue()");
+            }
+            var moveResult = states[agentIndex % 2].getGameBoardController()
+                    .tryMove(player.getOwner().getPosition(), dire, player.getId());
+            // be sure the move is valid and alive
+            if (!(moveResult instanceof final MoveResult.Valid.Alive aliveState)) {
+                continue;
+            }
+            numValidMoves++;    // increase num valid moves
+
+            states[agentIndex % 2].getGameBoardController().makeMove(dire, agentIndex);
+            // update max value
+//            System.out.println("exp chooses: " + dire);
+
+            states[agentIndex % 2].increaseNumGotGems(aliveState.collectedGems.size()); // add collected gem nums
+
+            double thisVal = getValue(states, depth + 1, maxDepth, switchPlayer(agentIndex));
+            expVal += thisVal;
+//            System.out.println("in exp value, depth = " + depth + ", dire = " + dire + ", val = " + thisVal);
+
+            // undo the move
+            var gameBoard = states[agentIndex % 2].getGameBoard();
+            gameBoard.getEntityCell(aliveState.origPosition).setEntity(states[agentIndex % 2].getPlayer());
+            states[agentIndex % 2].increaseNumGotGems(-aliveState.collectedGems.size());
+//            System.out.println("decreasing agent: " + agentIndex + " gem by " + aliveState.collectedGems.size());
+
+
+            for (@NotNull final var gemPos : aliveState.collectedGems) {
+                gameBoard.getEntityCell(gemPos).setEntity(new Gem());
+            }
+            for (@NotNull final var extraLifePos : aliveState.collectedExtraLives) {
+                gameBoard.getEntityCell(extraLifePos).setEntity(new ExtraLife());
+            }
+        }
+        if (numValidMoves == 0) {
+//            System.out.println("depth: " + depth + ", value: -inf, player: " + agentIndex);
+            return -100;
+        } else {
+//            System.out.println("depth: " + depth + ", value: " + expVal / numValidMoves + ", player: " + agentIndex);
+            return expVal / numValidMoves;
+        }
+    }
+
+    private double maxValue(GameState[] states, int depth, int maxDepth, int agentIndex) {
+        double maxVal = -Integer.MAX_VALUE;
+        var directions = new ArrayList<>(Arrays.asList(Direction.values()));
+        for (var dire : directions) {
+            var player = states[agentIndex % 2].getPlayer();
+            if (player.getOwner() == null) {
+                throw new IllegalArgumentException("player's owner is null in maxValue()");
+            }
+            var moveResult = states[agentIndex % 2].getGameBoardController()
+                    .tryMove(player.getOwner().getPosition(), dire, player.getId());
+            // be sure the move is valid and alive
+            if (!(moveResult instanceof final MoveResult.Valid.Alive aliveState)) {
+                continue;
+            }
+
+            states[agentIndex % 2].getGameBoardController().makeMove(dire,agentIndex);
+            // update max value
+//            System.out.println("max chooses: " + dire);
+
+            states[agentIndex % 2].increaseNumGotGems(aliveState.collectedGems.size()); // add collected gem nums
+
+            double thisVal = getValue(states, depth + 1, maxDepth, switchPlayer(agentIndex));
+            maxVal = Double.max(maxVal, thisVal);
+//            System.out.println("in max value, depth = " + depth + ", dire = " + dire + ", val = " + thisVal);
+
+            // undo the move
+            var gameBoard = states[agentIndex % 2].getGameBoard();
+            gameBoard.getEntityCell(aliveState.origPosition).setEntity(states[agentIndex % 2].getPlayer());
+//            System.out.println("decreasing agent: " + agentIndex + " gem by " + aliveState.collectedGems.size());
+            states[agentIndex % 2].increaseNumGotGems(-aliveState.collectedGems.size());
+
+            for (@NotNull final var gemPos : aliveState.collectedGems) {
+                gameBoard.getEntityCell(gemPos).setEntity(new Gem());
+            }
+            for (@NotNull final var extraLifePos : aliveState.collectedExtraLives) {
+                gameBoard.getEntityCell(extraLifePos).setEntity(new ExtraLife());
+            }
+        }
+//        System.out.println("depth: " + depth + ", value: " + maxVal + ", player: " + agentIndex);
+        return maxVal == -Integer.MAX_VALUE ? -100 : maxVal;
+    }
+
+    private double getValue(GameState[] states, int depth, int maxDepth, int agentIndex) {
+        *//*System.out.println("==========");
+        var board = states[0].getGameBoard();
+        int numRow = board.getNumRows();
+        int numCol = board.getNumCols();
+        for (int i = 0; i < numRow; ++i) {
+            for (int j = 0; j < numCol; ++j) {
+                System.out.print(board.getCell(i, j).toASCIIChar() + " ");
+            }
+            System.out.println();
+        }
+        System.out.println("==========");*//*
+        if (depth == maxDepth || states[agentIndex % 2].hasLost() || states[agentIndex % 2].noGemsLeft()) {
+            return evaluateState(gameState);
+        }
+
+        if (agentIndex == gameState.getPlayer().getId()) {
+            return maxValue(states, depth, maxDepth, agentIndex);
+        } else {
+            return expValue(states, depth, maxDepth, agentIndex);
+        }
+    }
+
+
+    private void makeMoveSmartly(MoveProcessor processor) {
+        lock.lock();
+        var directions = new ArrayList<>(Arrays.asList(Direction.values()));
+        List<Direction> bestDirections = new ArrayList<>();
+        double maxVal = -Integer.MAX_VALUE;
+        for (var dire : directions) {
+            var player = gameState.getPlayer();
+            if (player.getOwner() == null) {
+                throw new IllegalArgumentException("player's owner is null in makeMoveSmartly()");
+            }
+            var moveResult = gameState.getGameBoardController()
+                    .tryMove(player.getOwner().getPosition(), dire, player.getId());
+            if (!(moveResult instanceof MoveResult.Valid.Alive aliveState)) {
+                continue;
+            }
+
+            gameState.getGameBoardController().makeMove(dire, player.getId());
+
+//            System.out.println("max choose: " + dire);
+
+            gameState.increaseNumGotGems(aliveState.collectedGems.size()); // add collected gem nums
+
+            double thisValue = getValue(getGameStates(), 0, 5, switchPlayer(gameState.getPlayer().getId()));
+//            System.out.println("root: depth: " + 0 + ", direction: " + dire + ", value: " + thisValue);
+            if (thisValue > maxVal) {
+                maxVal = thisValue;
+                bestDirections.clear();
+                bestDirections.add(dire);
+            } else if (thisValue == maxVal) {
+                bestDirections.add(dire);
+            }
+
+            // undo the move
+            var gameBoard = gameState.getGameBoard();
+            gameBoard.getEntityCell(aliveState.origPosition).setEntity(gameState.getPlayer());
+            gameState.increaseNumGotGems(-aliveState.collectedGems.size());
+//            System.out.println("decreasing agent: " + player.getId() + " gem by " + aliveState.collectedGems.size());
+
+
+            for (@NotNull final var gemPos : aliveState.collectedGems) {
+                gameBoard.getEntityCell(gemPos).setEntity(new Gem());
+            }
+            for (@NotNull final var extraLifePos : aliveState.collectedExtraLives) {
+                gameBoard.getEntityCell(extraLifePos).setEntity(new ExtraLife());
+            }
+        }
+        Collections.shuffle(bestDirections);
+//        System.out.println("best direction: " + bestDirections.get(0) + "\n\n\n\n");
+        processor.move(bestDirections.get(0));
+        lock.unlock();
+    }*/
 
     /**
      * TODO implement this method
@@ -212,7 +397,9 @@ public class Robot implements MoveDelegate {
      * @param processor The processor to make movements.
      */
     private void makeMoveSmartly(MoveProcessor processor) {
+        lock.lock();
 
+        lock.unlock();
     }
 
 }

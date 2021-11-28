@@ -105,7 +105,12 @@ public class GameControlPane extends GridPane implements GameUIComponent {
      */
     public void delegateControl(MoveDelegate delegate) {
         moveDelegate = delegate;
-        moveDelegate.startDelegation(this::move);
+        moveDelegate.startDelegation(dire -> {
+            var result = gameController.processMove(dire, player.getId());
+            if (result != null) {
+                Platform.runLater(() -> moveEvent.get().handle(new MoveEvent(result, player.getId())));
+            }
+        });
         disable();
     }
 
