@@ -149,9 +149,10 @@ public class StudentTest {
         Robot.timeIntervalGenerator = TimeIntervalGenerator.expectedMilliseconds(5);
 
         // start robot delegation
+        List<Robot> robots = new ArrayList<>();
         for (var gameState : gameStates) {
             var randomDelegate = new Robot(gameState, Robot.Strategy.Random);
-            var smartDelegate = new Robot(gameState, Robot.Strategy.Smart);
+            robots.add(randomDelegate);
             randomDelegate.startDelegation(e -> controller.processMove(e, gameState.getPlayer().getId()));
         }
 
@@ -159,6 +160,10 @@ public class StudentTest {
             Thread.sleep(fewerMove ? 30: 1000);
         } catch (InterruptedException e) {
             System.out.println("Failed to sleep.");
+        }
+
+        for (var r : robots) {
+            r.stopDelegation();
         }
 
 //        for (var gameState : gameStates) {
@@ -340,8 +345,10 @@ public class StudentTest {
         Robot.timeIntervalGenerator = TimeIntervalGenerator.expectedMilliseconds(5);
 
         // start robot delegation
+        List<Robot> robots = new ArrayList<>();
         for (var gameState : gameStates) {
             var randomDelegate = new Robot(gameState, Robot.Strategy.Random);
+            robots.add(randomDelegate);
             randomDelegate.startDelegation(e -> controller.processMove(e, gameState.getPlayer().getId()));
         }
 
@@ -349,6 +356,10 @@ public class StudentTest {
             Thread.sleep(fewerMove ? 30: 1000);
         } catch (InterruptedException e) {
             System.out.println("Failed to sleep.");
+        }
+
+        for (var r : robots) {
+            r.stopDelegation();
         }
 
 
@@ -426,6 +437,9 @@ public class StudentTest {
             System.out.println("Failed to sleep.");
         }
 
+        randomDelegate.stopDelegation();
+        smartDelegate.stopDelegation();
+
 
         // check if players move
         for (var gameState : gameStates) {
@@ -501,6 +515,8 @@ public class StudentTest {
             System.out.println("Failed to sleep.");
         }
 
+        randomDelegate.stopDelegation();
+        smartDelegate.stopDelegation();
 
         // check if players move
         for (var gameState : gameStates) {
