@@ -137,7 +137,9 @@ public class Robot implements MoveDelegate {
             t.endThread();
         }
         for (var th : threads) {
-            while (th.getState() != Thread.State.TERMINATED) {}
+            while (th.getState() != Thread.State.TERMINATED) {
+                continue;   // check Style doesn't allow empty while loop body.
+            }
 //            System.out.println("out!");
         }
         tasks.clear();
