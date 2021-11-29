@@ -8,6 +8,7 @@ import hk.ust.cse.comp3021.pa3.util.TimeIntervalGenerator;
 import hk.ust.cse.comp3021.pa3.view.UIServices;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -21,6 +22,113 @@ import static org.junit.jupiter.api.Assertions.*;
 public class StudentTest {
     private GameController controller = null;
     private GameState[] gameStates;
+
+    @ParameterizedTest
+    @Tag("student")
+    @ValueSource(booleans = {true, false})
+    @DisplayName("testWinner-simple")
+    public void testWinnerSimple(final boolean unlimitedLive) throws FileNotFoundException {
+        Path puzzle = null;
+        if (unlimitedLive) {
+            puzzle = Paths.get(UIServices.getWorkingDirectory() + "/../puzzles/051-extra-life-unlimitedLife.multiplayer.game");
+        } else {
+            puzzle = Paths.get(UIServices.getWorkingDirectory() + "/../puzzles/05-extra-life.multiplayer.game");
+        }
+        gameStates = GameStateSerializer.loadFrom(puzzle);
+        controller = new GameController(gameStates);
+
+        var winners = controller.getWinners();
+        assertNull(winners);
+        
+        int id1 = -1, id2 = -1;
+        for (var state : gameStates) {
+            if (id1 == -1) {
+                id1 = state.getPlayer().getId();
+            } else {
+                id2 = state.getPlayer().getId();
+            }
+        }
+
+        // move to this
+//        S.S.L
+//        0MGM.
+//        W1SG.
+//        GMGM.
+//        ..S.L
+        controller.processMove(Direction.DOWN, id1);
+        controller.processMove(Direction.LEFT, id2);
+        // let player 0 die
+        controller.processMove(Direction.RIGHT, id1);
+        assertTrue(unlimitedLive != gameStates[0].hasLost());
+        assertFalse(gameStates[1].hasLost());
+        winners = controller.getWinners();
+        assertNull(winners);    // game not over
+        // let player 1 die
+        controller.processMove(Direction.DOWN, id2);
+        assertTrue(unlimitedLive != gameStates[0].hasLost());
+        assertTrue(unlimitedLive != gameStates[1].hasLost());
+        winners = controller.getWinners();
+        if (unlimitedLive) {
+            assertNull(winners);    // game not over
+        } else {
+            assertNotNull(winners, "All players dead, game should be ended.");
+            assertEquals(0, winners.length, "There should be no winner since both are dead.");
+            return;
+        }
+
+        // let unlimited life finish the game
+        controller.processMove(Direction.RIGHT, id2);
+        controller.processMove(Direction.RIGHT, id2);
+        controller.processMove(Direction.LEFT, id2);
+        controller.processMove(Direction.UP, id2);
+        controller.processMove(Direction.DOWN, id2);
+        controller.processMove(Direction.DOWN, id2);
+        controller.processMove(Direction.DOWN, id2);
+        controller.processMove(Direction.LEFT, id2);
+        // now
+//        S.S.L
+//        0M.M.
+//        W.S..
+//        GM.M.
+//        1.S.L
+        winners = controller.getWinners();
+        assertNull(winners);    // game not over
+        // collect last gem
+        controller.processMove(Direction.UP, id2);
+        winners = controller.getWinners();
+        assertNotNull(winners, "Game ends since all gems collected");
+        assertEquals(1, winners.length);
+        assertEquals(id2, winners[0].getId());
+    }
+
+    @Test
+    @Tag("student")
+    @DisplayName("testWinner-Tie")
+    public void testWinnerTie() throws FileNotFoundException {
+        Path puzzle = Paths.get(UIServices.getWorkingDirectory() + "/../puzzles/10-test-tie.multiplayer.game");
+        gameStates = GameStateSerializer.loadFrom(puzzle);
+        controller = new GameController(gameStates);
+
+        var winners = controller.getWinners();
+        assertNull(winners);
+
+        // let both player collect gem
+        int id1 = -1, id2 = -1;
+        for (var state : gameStates) {
+            if (id1 == -1) {
+                id1 = state.getPlayer().getId();
+            } else {
+                id2 = state.getPlayer().getId();
+            }
+        }
+        controller.processMove(Direction.DOWN, id1);
+        winners = controller.getWinners();
+        assertNull(winners);    // game not over
+        controller.processMove(Direction.DOWN, id2);
+        winners = controller.getWinners();
+        assertNotNull(winners, "Game should end since all gems collected.");
+        assertEquals(2, winners.length, "Both players should win.");
+    }
 
 
 
@@ -180,6 +288,156 @@ public class StudentTest {
         }
     }
 
+    @ParameterizedTest
+    @Tag("student")
+    @ValueSource(booleans = {true, false})
+    @DisplayName("testMultithreading-largeMapWithSmartRobot")
+    public void testMultithreadingLargeSmart(final boolean fewerMove) throws FileNotFoundException {
+        Path puzzle = Paths.get(UIServices.getWorkingDirectory() + "/../puzzles/07-test-multithread.game");
+        gameStates = GameStateSerializer.loadFrom(puzzle);
+        controller = new GameController(gameStates);
+
+        // get original gems num
+        var originalGemNum = gameStates[0].getGameBoard().getNumGems();
+
+        // set time to very fast
+        Robot.timeIntervalGenerator = TimeIntervalGenerator.expectedMilliseconds(4);
+
+        // start robot delegation
+        var randomDelegate = new Robot(gameStates[0], Robot.Strategy.Random);
+        var smartDelegate = new Robot(gameStates[0], Robot.Strategy.Smart);
+        randomDelegate.startDelegation(e -> controller.processMove(e, gameStates[0].getPlayer().getId()));
+        smartDelegate.startDelegation(e -> controller.processMove(e, gameStates[1].getPlayer().getId()));
+
+
+        try {
+            Thread.sleep(fewerMove ? 30: 1000);
+        } catch (InterruptedException e) {
+            System.out.println("Failed to sleep.");
+        }
+
+
+        // check if players move
+        for (var gameState : gameStates) {
+            assertNotEquals(0, gameState.getNumMoves(), "The player didn't move.");
+        }
+
+
+        // check gems num
+        var finalGems = 0;
+        for (var gameState : gameStates) {
+            finalGems += gameState.getNumGotGems();
+        }
+
+        assertEquals(originalGemNum, finalGems + gameStates[0].getNumGems(),
+                "should have " + originalGemNum + "gems, but after moving, " + finalGems + " gems" +
+                        "were collected by players in total, and " + gameStates[0].getNumGems() + " gems left on board.");
+
+        // check extra life
+        // this puzzle only have 3 extra life, meaning that
+        // (total_num_death) <= (original_num_life) + (total_extra_life) = 5
+        // (total_num_life_left) <= (original_num_life) + (total_extra_life) = 5
+        var totalNumDeath = 0;
+        var totalNumLifeLeft = 0;
+        for (var gameState : gameStates) {
+            totalNumDeath += gameState.getNumDeaths();
+            totalNumLifeLeft += gameState.getNumLives();
+        }
+        assertTrue(totalNumDeath <= 5, "total num death more than 5");
+        assertTrue(totalNumLifeLeft <= 5, "total num life after moving more than 5");
+
+        // check winner and loser
+        var winners = controller.getWinners();
+        if (winners == null) {
+            assertNotEquals(0, gameStates[0].getNumGems());
+        } else {
+            if (winners.length == 0) {
+                assertTrue(gameStates[0].hasLost() && gameStates[1].hasLost());
+            } else if (winners.length == 2) {
+                assertTrue(!gameStates[0].hasLost() && !gameStates[1].hasLost() && gameStates[0].getScore() == gameStates[1].getScore());
+            } else if (winners[0] == gameStates[0].getPlayer()) {
+                assertTrue(gameStates[1].hasLost() || gameStates[0].getScore() > gameStates[1].getScore());
+            } else {
+                assertTrue(gameStates[0].hasLost() || gameStates[0].getScore() < gameStates[1].getScore());
+            }
+        }
+    }
+
+    @ParameterizedTest
+    @Tag("student")
+    @ValueSource(booleans = {true, false})
+    @DisplayName("testMultithreading-manyGemsMapWithSmartRobot")
+    public void testMultithreadingManyGemSmart(final boolean fewerMove) throws FileNotFoundException {
+        Path puzzle = Paths.get(UIServices.getWorkingDirectory() + "/../puzzles/08-test-robot.game");
+        gameStates = GameStateSerializer.loadFrom(puzzle);
+        controller = new GameController(gameStates);
+
+        // get original gems num
+        var originalGemNum = gameStates[0].getGameBoard().getNumGems();
+
+        // set time to very fast
+        Robot.timeIntervalGenerator = TimeIntervalGenerator.expectedMilliseconds(4);
+
+        // start robot delegation
+        var randomDelegate = new Robot(gameStates[0], Robot.Strategy.Random);
+        var smartDelegate = new Robot(gameStates[0], Robot.Strategy.Smart);
+        randomDelegate.startDelegation(e -> controller.processMove(e, gameStates[0].getPlayer().getId()));
+        smartDelegate.startDelegation(e -> controller.processMove(e, gameStates[1].getPlayer().getId()));
+
+
+        try {
+            Thread.sleep(fewerMove ? 30: 1000);
+        } catch (InterruptedException e) {
+            System.out.println("Failed to sleep.");
+        }
+
+
+        // check if players move
+        for (var gameState : gameStates) {
+            assertNotEquals(0, gameState.getNumMoves(), "The player didn't move.");
+        }
+
+
+        // check gems num
+        var finalGems = 0;
+        for (var gameState : gameStates) {
+            finalGems += gameState.getNumGotGems();
+        }
+
+        assertEquals(originalGemNum, finalGems + gameStates[0].getNumGems(),
+                "should have " + originalGemNum + "gems, but after moving, " + finalGems + " gems" +
+                        "were collected by players in total, and " + gameStates[0].getNumGems() + " gems left on board.");
+
+        // check extra life
+        // this puzzle only have 1 extra life, meaning that
+        // (total_num_death) <= (original_num_life) + (total_extra_life) = 3
+        // (total_num_life_left) <= (original_num_life) + (total_extra_life) = 3
+        var totalNumDeath = 0;
+        var totalNumLifeLeft = 0;
+        for (var gameState : gameStates) {
+            totalNumDeath += gameState.getNumDeaths();
+            totalNumLifeLeft += gameState.getNumLives();
+        }
+        assertTrue(totalNumDeath <= 3, "total num death more than 3");
+        assertTrue(totalNumLifeLeft <= 3, "total num life after moving more than 3");
+
+        // check winner and loser
+        var winners = controller.getWinners();
+        if (winners == null) {
+            assertNotEquals(0, gameStates[0].getNumGems());
+        } else {
+            if (winners.length == 0) {
+                assertTrue(gameStates[0].hasLost() && gameStates[1].hasLost());
+            } else if (winners.length == 2) {
+                assertTrue(!gameStates[0].hasLost() && !gameStates[1].hasLost() && gameStates[0].getScore() == gameStates[1].getScore());
+            } else if (winners[0] == gameStates[0].getPlayer()) {
+                assertTrue(gameStates[1].hasLost() || gameStates[0].getScore() > gameStates[1].getScore());
+            } else {
+                assertTrue(gameStates[0].hasLost() || gameStates[0].getScore() < gameStates[1].getScore());
+            }
+        }
+    }
+
 
     @ParameterizedTest
     @Tag("student")
@@ -274,7 +532,7 @@ public class StudentTest {
 
     @ParameterizedTest
     @Tag("student")
-    @ValueSource(booleans = {true, false})
+    @ValueSource(booleans = {true/*, false*/})  // false is impossible to win!
     @DisplayName("testRobot-manyGemsTrickyMap")
     @Timeout(10)
     public void testRobotGemTrickyMap(final boolean playerZeroIsSmart) throws FileNotFoundException {
