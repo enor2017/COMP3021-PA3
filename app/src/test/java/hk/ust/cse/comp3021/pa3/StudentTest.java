@@ -16,6 +16,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import java.io.FileNotFoundException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -131,7 +132,6 @@ public class StudentTest {
     }
 
 
-
     @ParameterizedTest
     @Tag("student")
     @ValueSource(booleans = {true, false})
@@ -150,8 +150,8 @@ public class StudentTest {
 
         // start robot delegation
         for (var gameState : gameStates) {
-            var randomDelegate = new Robot(gameStates[0], Robot.Strategy.Random);
-            var smartDelegate = new Robot(gameStates[0], Robot.Strategy.Smart);
+            var randomDelegate = new Robot(gameState, Robot.Strategy.Random);
+            var smartDelegate = new Robot(gameState, Robot.Strategy.Smart);
             randomDelegate.startDelegation(e -> controller.processMove(e, gameState.getPlayer().getId()));
         }
 
@@ -212,6 +212,117 @@ public class StudentTest {
         }
     }
 
+    @ParameterizedTest
+    @Tag("student")
+    @ValueSource(booleans = {true, false})
+    @DisplayName("testMultithreading-threePlayers")
+    public void testMultithreadingThreePlayers(final boolean fewerMove) throws FileNotFoundException {
+        Path puzzle = Paths.get(UIServices.getWorkingDirectory() + "/../puzzles/11-test-three-players.multiplayer.game");
+        gameStates = GameStateSerializer.loadFrom(puzzle);
+        controller = new GameController(gameStates);
+
+        // get original gems num
+        var originalGemNum = gameStates[0].getGameBoard().getNumGems();
+
+        // set time to very fast
+        Robot.timeIntervalGenerator = TimeIntervalGenerator.expectedMilliseconds(5);
+
+        // start robot delegation
+        List<Robot> robots = new ArrayList<>();
+        for (var gameState : gameStates) {
+            var randomDelegate = new Robot(gameState, Robot.Strategy.Random);
+            robots.add(randomDelegate);
+            randomDelegate.startDelegation(e -> controller.processMove(e, gameState.getPlayer().getId()));
+        }
+
+        try {
+            Thread.sleep(fewerMove ? 30: 1000);
+        } catch (InterruptedException e) {
+            System.out.println("Failed to sleep.");
+        }
+
+        for (var robot : robots) {
+            robot.stopDelegation();
+        }
+
+//        for (var gameState : gameStates) {
+//            System.out.println("player pos: " + gameState.getPlayer().getOwner().getPosition());
+//        }
+
+        // check if players move
+        for (var gameState : gameStates) {
+            assertNotEquals(0, gameState.getNumMoves(), "The player didn't move.");
+        }
+
+
+        // check gems num
+        var finalGems = 0;
+        for (var gameState : gameStates) {
+            finalGems += gameState.getNumGotGems();
+        }
+
+//        assertNotEquals(0, finalGems, "How can players got 0 gems in total?");
+        assertEquals(originalGemNum, finalGems + gameStates[0].getNumGems(),
+                "should have " + originalGemNum + "gems, but after moving, " + finalGems + " gems" +
+                        "were collected by players in total, and " + gameStates[0].getNumGems() + " gems left on board.");
+
+        // check extra life
+        // this puzzle only have 1 extra life, meaning that
+        // (total_num_death) <= (original_num_life) + (total_extra_life) = 4
+        // (total_num_life_left) <= (original_num_life) + (total_extra_life) = 4
+        var totalNumDeath = 0;
+        var totalNumLifeLeft = 0;
+        for (var gameState : gameStates) {
+            totalNumDeath += gameState.getNumDeaths();
+            totalNumLifeLeft += gameState.getNumLives();
+        }
+        assertTrue(totalNumDeath <= 4, "total num death more than 4");
+        assertTrue(totalNumLifeLeft <= 4, "total num life after moving more than 4");
+
+        // check winner and loser
+        var winners = controller.getWinners();
+        if (winners == null) {
+            assertNotEquals(0, gameStates[0].getNumGems());
+        } else {
+            int numDeath = 0;
+            for (var gameState : gameStates) {
+                if (gameState.hasLost()) {
+                    numDeath++;
+                }
+            }
+            if (numDeath == 3) {
+                assertEquals(0, winners.length);
+            } else if (numDeath == 2) {
+                assertEquals(1, winners.length);
+                assertFalse(winners[0].getGameState().hasLost(), "The winner you got is dead.");
+            } else if (numDeath == 0 || numDeath == 1) {
+                int maxScore = -Integer.MAX_VALUE;
+                for (var state : gameStates) {
+                    if (!state.hasLost() && state.getScore() > maxScore) {
+                        maxScore = state.getScore();
+                    }
+                }
+                Set<Player> actualWinner = new HashSet<>();
+                for (var state : gameStates) {
+                    if (!state.hasLost() && state.getScore() == maxScore) {
+                        actualWinner.add(state.getPlayer());
+                    }
+                }
+
+                for (var state : gameStates) {
+                    System.out.println("Lost : " + state.hasLost() + ", id: " + state.getPlayer().getId() + ", score: " + state.getScore());
+                }
+                for (var w : actualWinner) {
+                    System.out.println("actual winner: " + w.getId());
+                }
+                for (var w : winners) {
+                    System.out.println("winner: " + w.getId());
+                    assertTrue(actualWinner.contains(w));
+                }
+            }
+        }
+    }
+
 
     @ParameterizedTest
     @Tag("student")
@@ -230,8 +341,7 @@ public class StudentTest {
 
         // start robot delegation
         for (var gameState : gameStates) {
-            var randomDelegate = new Robot(gameStates[0], Robot.Strategy.Random);
-            var smartDelegate = new Robot(gameStates[0], Robot.Strategy.Smart);
+            var randomDelegate = new Robot(gameState, Robot.Strategy.Random);
             randomDelegate.startDelegation(e -> controller.processMove(e, gameState.getPlayer().getId()));
         }
 
@@ -305,7 +415,7 @@ public class StudentTest {
 
         // start robot delegation
         var randomDelegate = new Robot(gameStates[0], Robot.Strategy.Random);
-        var smartDelegate = new Robot(gameStates[0], Robot.Strategy.Smart);
+        var smartDelegate = new Robot(gameStates[1], Robot.Strategy.Smart);
         randomDelegate.startDelegation(e -> controller.processMove(e, gameStates[0].getPlayer().getId()));
         smartDelegate.startDelegation(e -> controller.processMove(e, gameStates[1].getPlayer().getId()));
 
@@ -380,7 +490,7 @@ public class StudentTest {
 
         // start robot delegation
         var randomDelegate = new Robot(gameStates[0], Robot.Strategy.Random);
-        var smartDelegate = new Robot(gameStates[0], Robot.Strategy.Smart);
+        var smartDelegate = new Robot(gameStates[1], Robot.Strategy.Smart);
         randomDelegate.startDelegation(e -> controller.processMove(e, gameStates[0].getPlayer().getId()));
         smartDelegate.startDelegation(e -> controller.processMove(e, gameStates[1].getPlayer().getId()));
 
